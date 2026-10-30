@@ -1,6 +1,6 @@
 # .order().order() #
 
-A project designed to automate downloading debates using the Hansard API, transform them into a useable database, and then mine them for insights and content.
+A project designed to automate downloading debates using the Hansard API, transform them into a useable database, and then mine them for insights, content and predictions.
 
 #### 1. hansard_scraper
 Use the configuration cell to set the date range and/or number of files to download. Amend list of filtered material as needed to ensure non-substantive (apolitical) material doesn't get downloaded in the first place.
