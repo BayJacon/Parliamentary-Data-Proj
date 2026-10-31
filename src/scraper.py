@@ -320,3 +320,26 @@ def save_summary(summary):
     print(f"Saved summary to {csv_path}")
 
     return csv_path
+
+
+#===== CHECK DATA INTEGRITY =====#
+
+def check_integrity(summary, failures):
+    """
+    Flag debates that may be empty, unusually short, or unsuccessful.
+    """
+
+    if failures:
+        print("\nFAILED DOWNLOADS:")
+        for debate_id in failures:
+            print(f"  {debate_id}")
+
+    for row in summary:
+
+        if row["n_items"] == 0 and row["n_children"] > 0:
+            print(f'Text may be in child sections: {row["title"]}')
+
+        elif row["words"] < 300:
+            print(f'Very short ({row["words"]} words): {row["title"]}')
+
+    print("\nIntegrity checks complete.")
