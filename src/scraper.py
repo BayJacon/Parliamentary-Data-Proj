@@ -212,3 +212,88 @@ def filter_debates(results, house, start_date, end_date, blocklist=BLOCKLIST):
     ]
 
     return wanted, excluded
+
+
+#===== DOWNLOAD FULL DEBATES =====#
+
+def download_debates(wanted):
+    """
+    Download the full contents of each selected debate.
+    Save each debate as a raw JSON file.
+    Return summary records and a list of failed debate IDs.
+    """
+
+    summary = []
+    failures = []
+
+    for n, r in enumerate(wanted, 1):
+
+        debate_id = r["DebateSectionExtId"]
+
+        path = RAW_DIR / f'{r["SittingDate"][:10]}_{debate_id}.json'
+
+        try:
+            # Reuse an existing download rather than downloading it again
+            if path.exists():
+                with open(path, encoding="utf-8") as f:
+                    data = json.load(f)
+
+            else:
+                data = get_json(
+                    f"{API}/debates/debate/{debate_id}.json"
+                )
+
+                with open(path, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2)
+
+        except Exception as e:
+            print(
+                f"[{n}/{len(wanted)}] FAILED {debate_id} "
+                f"({r['Title'].strip()}): {e}"
+            )
+            failures.append(debate_id)
+            continue
+
+        # Extract the debate's individual contributions
+        items = data.get("Items", [])
+
+        # Calculate basic statistics
+        words = sum(
+            len(strip_html(i.get("Value")).split())
+            for i in items
+        )
+
+        speakers = {
+            i["MemberId"]
+            for i in items
+            if i.get("MemberId")
+        }
+
+        # Build one summary record for this debate
+        row = {
+            "id": debate_id,
+            "date": data["Overview"]["Date"][:10],
+            "title": data["Overview"]["Title"].strip(),
+            "n_items": len(items),
+            "n_speakers": len(speakers),
+            "n_children": len(data.get("ChildDebates", [])),
+            "words": words,
+            "file": path.name,
+        }
+
+        summary.append(row)
+
+        print(
+            f"[{n}/{len(wanted)}] {row['date']} | {row['title']} | "
+            f"{row['n_items']} items, "
+            f"{row['n_speakers']} speakers, "
+            f"{row['words']} words, "
+            f"{row['n_children']} children"
+        )
+
+    print(
+        f"\nDone. {len(summary)} downloaded, "
+        f"{len(failures)} failed."
+    )
+
+    return summary, failures
