@@ -301,16 +301,18 @@ def download_debates(wanted):
 
 #===== SAVE PROCESSED SUMMARY =====#
 
-def save_summary(summary):
+def save_summary(summary, start_date, end_date):
     """
-    Save the debate summary as a CSV in data/processed/.
+    Save the debate summary as a date-labelled CSV in data/processed/.
     """
-
     if not summary:
         print("No summary records to save.")
         return None
 
-    csv_path = PROCESSED_DIR / "debate_summary.csv"
+    filename = (
+        f"debate_summary_{start_date}_{end_date}.csv"
+    )
+    csv_path = PROCESSED_DIR / filename
 
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=summary[0].keys())
@@ -318,7 +320,6 @@ def save_summary(summary):
         writer.writerows(summary)
 
     print(f"Saved summary to {csv_path}")
-
     return csv_path
 
 
