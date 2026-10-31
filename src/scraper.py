@@ -32,7 +32,9 @@ TAKE = 10                         # Results per API page
 DELAY = 1.0                       # Seconds between requests
 
 # Output directories
-OUT_DIR = Path("data")
+PROJECT_DIR = Path(__file__).resolve().parents[1]
+
+OUT_DIR = PROJECT_DIR / "data"
 RAW_DIR = OUT_DIR / "raw"
 PROCESSED_DIR = OUT_DIR / "processed"
 
