@@ -178,3 +178,37 @@ def fetch_debate_list(house, start_date, end_date,
             break
 
     return results
+
+
+#===== FILTER DEBATES =====#
+
+def keep_debate(r, house, start_date, end_date, blocklist=BLOCKLIST):
+    """
+    Return True if a debate section meets our filtering criteria.
+    Return False if it should be excluded.
+    """
+
+    return (
+        r["House"] == house
+        and r["DebateSection"] == f"{house} Chamber"
+        and start_date.isoformat() <= r["SittingDate"][:10] <= end_date.isoformat()
+        and r["Title"].strip().lower() not in blocklist
+    )
+
+
+def filter_debates(results, house, start_date, end_date, blocklist=BLOCKLIST):
+    """
+    Separate retrieved debate sections into wanted and excluded lists.
+    """
+
+    wanted = sorted(
+        (r for r in results if keep_debate(r, house, start_date, end_date, blocklist)),
+        key=lambda r: (r["SittingDate"], r["Title"].strip())
+    )
+
+    excluded = [
+        r for r in results
+        if not keep_debate(r, house, start_date, end_date, blocklist)
+    ]
+
+    return wanted, excluded
