@@ -346,3 +346,67 @@ def check_integrity(summary, failures):
             print(f'Very short ({row["words"]} words): {row["title"]}')
 
     print("\nIntegrity checks complete.")
+
+#==== MAIN SCRAPE FUNCTION =====#
+def scrape_hansard(
+    start_date,
+    end_date,
+    house=HOUSE,
+    max_debates=MAX_DEBATES,
+    take=TAKE,
+    blocklist=BLOCKLIST
+):
+    """
+    Run the complete Hansard data collection pipeline.
+
+    Fetches debate metadata, filters debates, downloads raw JSON,
+    saves a summary CSV, and performs integrity checks.
+    """
+
+    # Convert date strings into date objects if necessary
+    if isinstance(start_date, str):
+        start_date = date.fromisoformat(start_date)
+
+    if isinstance(end_date, str):
+        end_date = date.fromisoformat(end_date)
+
+    # Check that the date range is valid
+    if start_date > end_date:
+        raise ValueError("start_date must be before or equal to end_date.")
+
+    print(f"\nStarting Hansard scrape: {start_date} to {end_date}")
+    print(f"House: {house}")
+
+    # 1. Retrieve debate metadata
+    results = fetch_debate_list(
+        house,
+        start_date,
+        end_date,
+        max_debates,
+        take
+    )
+
+    # 2. Filter the debate list
+    wanted, excluded = filter_debates(
+        results,
+        house,
+        start_date,
+        end_date,
+        blocklist
+    )
+
+    print(f"\nDebates retained: {len(wanted)}")
+    print(f"Debates excluded: {len(excluded)}")
+
+    # 3. Download the raw debate JSON files
+    summary, failures = download_debates(wanted)
+
+    # 4. Save the summary CSV
+    save_summary(summary, start_date, end_date)
+
+    # 5. Perform integrity checks
+    check_integrity(summary, failures)
+
+    print("\nHansard scrape complete.")
+
+    return summary, failures
