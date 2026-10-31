@@ -297,3 +297,26 @@ def download_debates(wanted):
     )
 
     return summary, failures
+
+
+#===== SAVE PROCESSED SUMMARY =====#
+
+def save_summary(summary):
+    """
+    Save the debate summary as a CSV in data/processed/.
+    """
+
+    if not summary:
+        print("No summary records to save.")
+        return None
+
+    csv_path = PROCESSED_DIR / "debate_summary.csv"
+
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=summary[0].keys())
+        writer.writeheader()
+        writer.writerows(summary)
+
+    print(f"Saved summary to {csv_path}")
+
+    return csv_path
