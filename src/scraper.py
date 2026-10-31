@@ -112,3 +112,69 @@ def strip_html(s):
     """
 
     return re.sub(r"<[^>]+>", "", s or "").strip()
+
+
+#===== FETCH DEBATE LIST =====#
+
+def fetch_debate_list(house, start_date, end_date,
+                      max_debates=MAX_DEBATES, take=TAKE):
+    """
+    Retrieve a list of Hansard debate sections for a House and date range.
+    """
+
+    results = []
+    seen = set()
+    skip = 0
+
+    for _ in range(500):
+
+        data = get_json(f"{API}/search/debates.json", {
+            "queryParameters.house": house,
+            "queryParameters.startDate": start_date.isoformat(),
+            "queryParameters.endDate": end_date.isoformat(),
+            "queryParameters.orderBy": "SittingDateAsc",
+            "queryParameters.skip": skip,
+            "queryParameters.take": take,
+        })
+
+        batch = data.get("Results", [])
+        total = data.get("TotalResultCount", 0)
+
+        if skip == 0:
+            print("TotalResultCount:", total)
+
+            if total > 50_000:
+                raise RuntimeError(
+                    "Total is huge, so the date/house filters may not "
+                    "be working. Check the API parameter names."
+                )
+
+        if not batch:
+            break
+
+        for r in batch:
+            debate_id = r["DebateSectionExtId"]
+
+            if debate_id not in seen:
+                seen.add(debate_id)
+                results.append(r)
+
+                if max_debates is not None and len(results) >= max_debates:
+                    break
+
+        skip += len(batch)
+
+        limit_str = (
+            f"limit: {max_debates}"
+            if max_debates is not None
+            else "no limit"
+        )
+
+        print(f"Fetched {len(results)} of {total} ({limit_str})")
+
+        if skip >= total or (
+            max_debates is not None and len(results) >= max_debates
+        ):
+            break
+
+    return results
