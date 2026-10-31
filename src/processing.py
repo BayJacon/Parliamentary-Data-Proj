@@ -1,6 +1,7 @@
 
 import json
 from pathlib import Path
+import pandas as pd
 
 def load_hansard_items(raw_dir):
     """
