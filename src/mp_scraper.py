@@ -13,7 +13,6 @@ import argparse
 import json
 import os
 import time
-from datetime import date
 
 import pandas as pd
 import requests
@@ -160,22 +159,16 @@ def check_mps(mps):
     print("\nColumns with missing values:\n",
           missing[missing > 0].to_string() if missing.any() else "  none")
 
-    ids = mps.groupby("party_id")["party"].agg(lambda s: sorted(s.dropna().unique()))
-    shared = ids[ids.str.len() > 1]
-    if len(shared):
-        print("\nParty IDs covering more than one party name:\n", shared.to_string())
-
 
 #===== SAVE =====#
 
-def save_snapshot(mps):
-    """Write a dated CSV snapshot plus mps_current.csv (always the latest)."""
+def save_mps(mps):
+    """Write the table to data/processed/mps_current.csv, replacing the previous version."""
     PROCESSED.mkdir(parents=True, exist_ok=True)
-    snapshot = PROCESSED / f"mps_{date.today().isoformat()}.csv"
-    mps.to_csv(snapshot, index=False)
-    mps.to_csv(PROCESSED / "mps_current.csv", index=False)
-    print("Saved", snapshot, "and mps_current.csv")
-    return snapshot
+    path = PROCESSED / "mps_current.csv"
+    mps.to_csv(path, index=False)
+    print("Saved", path)
+    return path
 
 
 #===== PIPELINE =====#
@@ -195,7 +188,7 @@ def update_mps(refetch=True, save=True, check=True):
         check_mps(mps)
     if save:
         print()
-        save_snapshot(mps)
+        save_mps(mps)
     return mps
 
 
